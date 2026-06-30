@@ -15,6 +15,8 @@ import {
 // Fail loudly at startup if any required config key is missing, so the
 // developer sees a clear error rather than a cryptic Firebase exception.
 // ---------------------------------------------------------------------------
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const requiredEnvVars = [
   "NEXT_PUBLIC_FIREBASE_API_KEY",
   "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN",
