@@ -150,7 +150,7 @@ const NeonButton = forwardRef<HTMLButtonElement, NeonButtonProps>(
           <>
             <Spinner />
             <span>
-              {loadingLabel ?? children ?? "Loading…"}
+              { (loadingLabel ?? children ?? "Loading…") as any }
             </span>
           </>
         ) : (
