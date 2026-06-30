@@ -1,0 +1,31 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isVerifiedStudent() {
+      return request.auth != null
+        && request.auth.token.email.matches('.*@iitbhilai\\.ac\\.in');
+    }
+
+    match /users/{userId} {
+      allow read, write: if isVerifiedStudent() && request.auth.uid == userId;
+    }
+
+    match /cafe_menu/{itemId} {
+      allow read: if isVerifiedStudent();
+      allow write: if false;
+    }
+
+    match /cafe_orders/{orderId} {
+      allow read: if isVerifiedStudent() && resource.data.studentId == request.auth.uid;
+      allow write: if false;
+    }
+
+    match /marketplace_listings/{listingId} {
+      allow read: if isVerifiedStudent();
+      allow create: if isVerifiedStudent() && request.resource.data.sellerId == request.auth.uid;
+      allow update, delete: if isVerifiedStudent() && resource.data.sellerId == request.auth.uid;
+    }
+  }
+}
