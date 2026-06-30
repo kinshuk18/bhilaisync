@@ -20,7 +20,7 @@ export default function CafePage() {
       setLoading(true);
       setFetchError(null);
       try {
-        const snapshot = await getDocs(collection(db, COLLECTIONS.cafe_menu));
+        const snapshot = await getDocs(collection(db, COLLECTIONS.CAFE_MENU));
         const items: CafeMenuItemDocument[] = snapshot.docs.map(
           (doc) => doc.data() as CafeMenuItemDocument
         );
