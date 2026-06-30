@@ -19,7 +19,7 @@ export default function MarketPage() {
       setFetchError(null);
       try {
         const listingsQuery = query(
-          collection(db, COLLECTIONS.marketplace_listings),
+          collection(db, COLLECTIONS.MARKETPLACE_LISTINGS),
           where("status", "==", "active"),
           orderBy("createdAt", "desc")
         );
