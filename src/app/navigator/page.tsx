@@ -159,7 +159,7 @@ function MessageBubble({ message, displayName, index }: MessageBubbleProps) {
                   .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
                   .replace(/\*(.*?)\*/g,     "<em>$1</em>")
                   .replace(/^- (.+)$/gm,     "<li>$1</li>")
-                  .replace(/(<li>.*<\/li>)/s,(match) => `<ul>${match}</ul>`)
+                  .replace(/(<li>[\s\S]*<\/li>)/,(match) => `<ul>${match}</ul>`)
                   .replace(/`([^`]+)`/g,     "<code>$1</code>"),
               }}
             />
