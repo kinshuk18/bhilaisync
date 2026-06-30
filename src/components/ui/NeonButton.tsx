@@ -150,6 +150,7 @@ const NeonButton = forwardRef<HTMLButtonElement, NeonButtonProps>(
           <>
             <Spinner />
             <span>
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               { (loadingLabel ?? children ?? "Loading…") as any }
             </span>
           </>
