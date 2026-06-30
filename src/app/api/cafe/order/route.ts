@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb, generateFirestoreId } from "@/lib/firebase-admin";
-import { COLLECTIONS, CafeOrderDocument } from "@/lib/firebase";
+import { COLLECTIONS, CafeOrderDocument } from "@/lib/firebase-types";
 
 export async function POST(request: NextRequest) {
   try {

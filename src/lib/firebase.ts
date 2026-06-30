@@ -10,45 +10,42 @@ import {
   connectAuthEmulator,
 } from "firebase/auth";
 
-// ---------------------------------------------------------------------------
-// Environment variable validation
-// Fail loudly at startup if any required config key is missing, so the
-// developer sees a clear error rather than a cryptic Firebase exception.
-// ---------------------------------------------------------------------------
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const requiredEnvVars = [
-  "NEXT_PUBLIC_FIREBASE_API_KEY",
-  "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN",
-  "NEXT_PUBLIC_FIREBASE_PROJECT_ID",
-  "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET",
-  "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID",
-  "NEXT_PUBLIC_FIREBASE_APP_ID",
-] as const;
-
-type RequiredEnvVar = (typeof requiredEnvVars)[number];
-
-function assertEnvVar(key: RequiredEnvVar): string {
-  const value = process.env[key];
-  if (!value || value.trim() === "") {
-    throw new Error(
-      `[BhilaiSync] Missing required environment variable: ${key}.\n` +
-        `Ensure your .env.local file is populated and the Next.js dev server has been restarted.`
-    );
-  }
-  return value;
-}
 
 // ---------------------------------------------------------------------------
 // Firebase client configuration
+// IMPORTANT: NEXT_PUBLIC_* variables MUST be referenced with static literal
+// strings so Next.js can inline them at compile time. Dynamic bracket access
+// (process.env[key] where key is a runtime variable) is NOT replaced by the
+// Next.js compiler and resolves to undefined in the browser bundle.
 // ---------------------------------------------------------------------------
+
+// Static lookup — each key is a compile-time literal so Next.js inlines it.
+const ENV = {
+  apiKey:            process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain:        process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId:         process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket:     process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId:             process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+} as const;
+
+// Validate at module load time so any missing var fails loudly.
+for (const [field, value] of Object.entries(ENV)) {
+  if (!value || value.trim() === "") {
+    throw new Error(
+      `[BhilaiSync] Missing required environment variable: NEXT_PUBLIC_FIREBASE_${field.toUpperCase()}.\n` +
+        `Ensure your .env.local file is populated and the Next.js dev server has been restarted.`
+    );
+  }
+}
+
 const firebaseConfig = {
-  apiKey:            assertEnvVar("NEXT_PUBLIC_FIREBASE_API_KEY"),
-  authDomain:        assertEnvVar("NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN"),
-  projectId:         assertEnvVar("NEXT_PUBLIC_FIREBASE_PROJECT_ID"),
-  storageBucket:     assertEnvVar("NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET"),
-  messagingSenderId: assertEnvVar("NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID"),
-  appId:             assertEnvVar("NEXT_PUBLIC_FIREBASE_APP_ID"),
+  apiKey:            ENV.apiKey!,
+  authDomain:        ENV.authDomain!,
+  projectId:         ENV.projectId!,
+  storageBucket:     ENV.storageBucket!,
+  messagingSenderId: ENV.messagingSenderId!,
+  appId:             ENV.appId!,
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -110,92 +107,16 @@ if (
 }
 
 // ---------------------------------------------------------------------------
-// Type-safe Firestore collection path constants
-// Centralising these here eliminates magic strings across the codebase and
-// makes collection renames a single-line change.
+// Re-export all pure constants and interfaces from the side-effect-free
+// firebase-types module. Route Handlers and Server Components should import
+// directly from "@/lib/firebase-types" to avoid pulling in the client SDK.
+// Client-side code may continue to import from "@/lib/firebase" as before.
 // ---------------------------------------------------------------------------
-export const COLLECTIONS = {
-  USERS:                 "users",
-  CAFE_MENU:             "cafe_menu",
-  CAFE_ORDERS:           "cafe_orders",
-  MARKETPLACE_LISTINGS:  "marketplace_listings",
-  NAVIGATOR_LOGS:        "navigator_logs",
-} as const;
-
-export type CollectionName =
-  (typeof COLLECTIONS)[keyof typeof COLLECTIONS];
+export * from "@/lib/firebase-types";
 
 // ---------------------------------------------------------------------------
-// Shared TypeScript interfaces for Firestore document shapes
-// Defining them here (rather than in a separate types/ file) keeps the
-// schema single-sourced alongside the collection constants.
-// ---------------------------------------------------------------------------
-
-/** Stored under /users/{uid} */
-export interface UserDocument {
-  uid:         string;
-  email:       string;
-  displayName: string;
-  role:        "student" | "admin" | "cafe_staff";
-  isVerified:  boolean;
-  createdAt:   number; // Unix ms — Firestore serverTimestamp resolved to number on read
-}
-
-/** Stored under /cafe_menu/{itemId} */
-export interface CafeMenuItemDocument {
-  itemId:      string;
-  name:        string;
-  description: string;
-  price:       number; // INR, stored as integer paise or decimal rupees
-  isAvailable: boolean;
-  category:    "beverages" | "snacks" | "meals" | "desserts" | string;
-}
-
-/** Line-item inside a cafe order */
-export interface CafeOrderItem {
-  itemId:   string;
-  name:     string;
-  price:    number;
-  quantity: number;
-}
-
-/** Stored under /cafe_orders/{orderId} */
-export interface CafeOrderDocument {
-  orderId:         string;
-  studentId:       string;
-  items:           CafeOrderItem[];
-  totalAmount:     number;
-  status:          "pending" | "confirmed" | "preparing" | "ready" | "completed" | "cancelled";
-  scheduledPickup: string; // ISO-8601 datetime string
-  createdAt:       number;
-}
-
-/** Stored under /marketplace_listings/{listingId} */
-export interface MarketplaceListingDocument {
-  listingId:   string;
-  sellerId:    string;
-  title:       string;
-  description: string;
-  aiSummary:   string;
-  price:       number;
-  condition:   "new" | "like_new" | "good" | "fair" | "poor";
-  imageUrl:    string;
-  status:      "active" | "sold" | "removed";
-  createdAt:   number;
-}
-
-/** Stored under /navigator_logs/{logId} */
-export interface NavigatorLogDocument {
-  logId:      string;
-  studentId:  string;
-  query:      string;
-  aiResponse: string;
-  timestamp:  number;
-}
-
-// ---------------------------------------------------------------------------
-// Named exports
-// Import these wherever Firebase services are needed:
+// Named exports — Firebase SDK service instances
+// Import these wherever live Firebase services are needed:
 //   import { db, auth, COLLECTIONS } from "@/lib/firebase";
 // ---------------------------------------------------------------------------
 export { app, db, auth };

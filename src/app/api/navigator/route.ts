@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 import { adminDb, generateFirestoreId } from "@/lib/firebase-admin";
-import { COLLECTIONS } from "@/lib/firebase";
-import type { NavigatorLogDocument } from "@/lib/firebase";
+import { COLLECTIONS } from "@/lib/firebase-types";
+import type { NavigatorLogDocument } from "@/lib/firebase-types";
 
 // ---------------------------------------------------------------------------
 // Environment guard
