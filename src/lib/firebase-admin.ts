@@ -28,6 +28,14 @@ const requiredAdminEnvVars = [
   "NEXT_PUBLIC_FIREBASE_PROJECT_ID",
 ] as const;
 
+// This loop actually uses the variable, satisfying the compiler 
+// and fulfilling your "Fail loudly" requirement!
+requiredAdminEnvVars.forEach((envVar) => {
+  if (!process.env[envVar]) {
+    throw new Error(`MISSING CONFIG: Environment variable ${envVar} is not set.`);
+  }
+});
+
 type RequiredAdminEnvVar = (typeof requiredAdminEnvVars)[number];
 
 function assertAdminEnvVar(key: RequiredAdminEnvVar): string {
